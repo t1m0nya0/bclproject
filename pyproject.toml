@@ -12,6 +12,7 @@ djangorestframework = "^3.14.0"
 qrcode = "^7.4.2"
 pillow = "^10.0.0"
 secure-smtplib = "^0.1.1"
+gunicorn = "^21.2.0"
 
 
 [build-system]
