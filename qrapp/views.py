@@ -1,48 +1,60 @@
+from django.forms import model_to_dict
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+import qrcode
+from django.http import HttpResponse
+from io import BytesIO
+
 from rest_framework import generics
 from rest_framework.permissions import IsAdminUser
-
-from .models import Ticket
-from .serializers import TicketSerializer
-import qrcode
-from io import BytesIO
-from django.core.files import File
 from rest_framework.response import Response
 
-from .utils import send_email
+from qrapp.forms import TicketForm
+from qrapp.models import Ticket
+from qrapp.serializers import TicketSerializer
 
 
-class TicketListCreateView(generics.ListCreateAPIView):
-    queryset = Ticket.objects.all()
-    serializer_class = TicketSerializer
-    permission_classes = (IsAdminUser,)
+@login_required
+def generate_qr_code(request, ticket_id):
+    ticket = Ticket.objects.get(id=ticket_id)
 
-    def perform_create(self, serializer):
-        mail = self.request.data.get('mail', '')  # Извлечение адреса электронной почты из запроса
-        ticket = serializer.save(mail=mail)  # Сохранение билета с указанным адресом электронной почты
+    if not ticket.bcl_admin == request.user:
+        # Проверка, что пользователь имеет право генерировать QR-код только для своего билета
+        return HttpResponse("У вас нет прав для генерации этого QR-кода.")
 
-        # Генерация QR-кода
-        qr = qrcode.QRCode(
-            version=1,
-            error_correction=qrcode.constants.ERROR_CORRECT_L,
-            box_size=10,
-            border=4,
-        )
-        qr.add_data(f"http://127.0.0.1:8000/tickets/{ticket.id}/check/")
-        qr.make(fit=True)
+    # Создание QR-кода
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(f"http://172.16.85.254:8000/qrapp/tickets/{ticket.id}/check/")
+    qr.make(fit=True)
 
-        img = qr.make_image(fill_color="black", back_color="white")
+    # Создание изображения QR-кода
+    img = qr.make_image(fill_color="black", back_color="white")
+    buffer = BytesIO()
+    img.save(buffer, format="PNG")
 
-        # Сохранение QR-кода как изображения
-        buffer = BytesIO()
-        img.save(buffer)
-        ticket.qr_code.save(f'qr_code_{ticket.id}.png', File(buffer), save=True)
+    # Возвращаем изображение в ответе
+    return HttpResponse(buffer.getvalue(), content_type="image/png")
 
-        receiver_email = mail  # Адрес получателя, указанный в запросе
-        subject = "Ваш билет с QR-кодом"
-        message = "Спасибо за покупку билета. Вот ваш QR-код для мероприятия."
 
-        qr_code_path = ticket.qr_code.path  # Путь к QR-коду
-        send_email(receiver_email, subject, message, qr_code_path)
+@login_required
+def create_ticket(request):
+    if request.method == "POST":
+        form = TicketForm(request.POST)
+        if form.is_valid():
+            ticket = form.save(commit=False)
+            print(request.user)
+            ticket.bcl_admin = request.user
+            ticket.save()
+            return redirect('generate-qr-code', ticket_id=ticket.id)
+    else:
+        form = TicketForm()
+
+    return render(request, 'qrapp/create_ticket.html', {'form': form})
 
 
 class TicketCheckView(generics.RetrieveAPIView):
@@ -52,17 +64,17 @@ class TicketCheckView(generics.RetrieveAPIView):
 
     def retrieve(self, request, pk):
         ticket = self.get_object()
-
         # Проверка, что билет оплачен
         if not ticket.purchase_status:
-            return Response({"status": "invalid", "message": "Билет не оплачен"})
+            return Response({"message": "Билет не оплачен"})
 
         # Проверка num_of_visits
         if ticket.num_of_visits > 0:
-            return Response({"status": "invalid", "message": "Билет уже использован"})
+            return Response({"message": "Билет уже использован"})
 
         # Увеличение счетчика посещений
         ticket.num_of_visits += 1
         ticket.save()
-
-        return Response({"status": "valid", "message": "Билет действителен"})
+        ticket_data = model_to_dict(ticket)
+        return Response({"message": "Билет действителен",
+                         "ticket_info": ticket_data})
