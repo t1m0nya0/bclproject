@@ -10,12 +10,7 @@ class TicketSerializer(serializers.ModelSerializer):
         fields = (
             "first_name",
             "last_name",
-            "phone_number",
-            "student_id",
             "university",
             "purchase_status",
-            "qr_code",
-            "num_of_visits",
-            "dorm_stud",
-            "owner",
+            "price",
         )

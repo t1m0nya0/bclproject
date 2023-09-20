@@ -18,10 +18,6 @@ from qrapp.serializers import TicketSerializer
 def generate_qr_code(request, ticket_id):
     ticket = Ticket.objects.get(id=ticket_id)
 
-    if not ticket.bcl_admin == request.user:
-        # Проверка, что пользователь имеет право генерировать QR-код только для своего билета
-        return HttpResponse("У вас нет прав для генерации этого QR-кода.")
-
     # Создание QR-кода
     qr = qrcode.QRCode(
         version=1,
@@ -29,7 +25,7 @@ def generate_qr_code(request, ticket_id):
         box_size=10,
         border=4,
     )
-    qr.add_data(f"http://172.16.85.254:8000/qrapp/tickets/{ticket.id}/check/")
+    qr.add_data(f"http://172.20.10.9:8000/qrapp/tickets/{ticket.id}/check/")
     qr.make(fit=True)
 
     # Создание изображения QR-кода
@@ -47,8 +43,6 @@ def create_ticket(request):
         form = TicketForm(request.POST)
         if form.is_valid():
             ticket = form.save(commit=False)
-            print(request.user)
-            ticket.bcl_admin = request.user
             ticket.save()
             return redirect('generate-qr-code', ticket_id=ticket.id)
     else:
