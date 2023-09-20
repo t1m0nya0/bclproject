@@ -25,7 +25,7 @@ def generate_qr_code(request, ticket_id):
         box_size=10,
         border=4,
     )
-    qr.add_data(f"http://172.20.10.9:8000/qrapp/tickets/{ticket.id}/check/")
+    qr.add_data(f"https://bclproject.up.railway.app/qrapp/tickets/{ticket.id}/check/")
     qr.make(fit=True)
 
     # Создание изображения QR-кода
