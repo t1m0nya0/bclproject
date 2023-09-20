@@ -48,8 +48,7 @@ docs/_build/
 # PyBuilder
 target
 
-# Database
-api/db.sqlite3
+
 
 # Mac
 .DS_Store
@@ -59,8 +58,6 @@ media/
 out.png
 # django/media
 .idea/
-db.sqlite3
-celerybeat-schedule.db
 celerybeat-schedule
 celerybeat.pid
 *.vscode
