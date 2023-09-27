@@ -11,6 +11,5 @@ class TicketSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
             "university",
-            "purchase_status",
             "price",
         )

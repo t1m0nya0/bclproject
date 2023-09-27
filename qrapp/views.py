@@ -58,9 +58,6 @@ class TicketCheckView(generics.RetrieveAPIView):
 
     def retrieve(self, request, pk):
         ticket = self.get_object()
-        # Проверка, что билет оплачен
-        if not ticket.purchase_status:
-            return Response({"message": "Билет не оплачен"})
 
         # Проверка num_of_visits
         if ticket.num_of_visits > 0:
