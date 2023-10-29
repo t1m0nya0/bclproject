@@ -9,5 +9,4 @@ class TicketSerializer(serializers.ModelSerializer):
         model = Ticket
         fields = (
             "name",
-            "university",
         )
