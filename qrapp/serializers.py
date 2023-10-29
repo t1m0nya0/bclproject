@@ -8,8 +8,6 @@ class TicketSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ticket
         fields = (
-            "first_name",
-            "last_name",
+            "name",
             "university",
-            "price",
         )

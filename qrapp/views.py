@@ -4,6 +4,8 @@ from django.contrib.auth.decorators import login_required
 import qrcode
 from django.http import HttpResponse
 from io import BytesIO
+from django.http import HttpResponse
+from django.shortcuts import render
 
 from rest_framework import generics
 from rest_framework.permissions import IsAdminUser
@@ -61,11 +63,10 @@ class TicketCheckView(generics.RetrieveAPIView):
 
         # Проверка num_of_visits
         if ticket.num_of_visits > 0:
-            return Response({"message": "Билет уже использован"})
+            return render(request, 'qrapp/invalid_ticket.html')
 
         # Увеличение счетчика посещений
         ticket.num_of_visits += 1
         ticket.save()
         ticket_data = model_to_dict(ticket)
-        return Response({"message": "Билет действителен",
-                         "ticket_info": ticket_data})
+        return render(request, 'qrapp/valid_ticket.html', {'ticket_info': ticket_data})

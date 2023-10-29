@@ -3,8 +3,6 @@ from django.db import models
 
 
 class Ticket(models.Model):
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
+    name = models.CharField(max_length=255)
     university = models.CharField(max_length=100)
     num_of_visits = models.IntegerField(default=0)
-    price = models.PositiveIntegerField()
